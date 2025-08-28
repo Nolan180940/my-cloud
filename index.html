@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>我的云盘</title>
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; padding: 40px; max-width: 800px; margin: 0 auto; }
+    h1 { color: #333; text-align: center; }
+    ul { list-style: none; padding: 0; }
+    li { padding: 12px 0; border-bottom: 1px solid #eee; }
+    a { text-decoration: none; color: #1a73e8; font-size: 16px; }
+    a:hover { text-decoration: underline; }
+    .footer { text-align: center; margin-top: 40px; color: #777; font-size: 14px; }
+  </style>
+</head>
+<body>
+  <h1>☁️ 我的云盘</h1>
+  <ul id="file-list"></ul>
+  <p class="footer">更新时间: <span id="update-time"></span></p>
+
+  <script>
+    fetch('https://api.github.com/repos/你的用户名/my-cloud/contents/')
+      .then(res => res.json())
+      .then(data => {
+        const ul = document.getElementById('file-list');
+        const exclude = ['index.html', 'README.md', '.github']; // 忽略的文件
+        data
+          .filter(item => !exclude.includes(item.name))
+          .forEach(file => {
+            const li = document.createElement('li');
+            li.innerHTML = `
+              <a href="https://cdn.jsdelivr.net/gh/你的用户名/my-cloud@main/${file.name}" target="_blank">
+                📎 ${file.name} (${(file.size / 1024).toFixed(1)} KB)
+              </a>
+            `;
+            ul.appendChild(li);
+          });
+        document.getElementById('update-time').textContent = new Date().toLocaleString();
+      })
+      .catch(err => console.error('加载失败:', err));
+  </script>
+</body>
+</html>
