@@ -3,42 +3,183 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>我的云盘</title>
+  <title>☁️ 我的云盘</title>
   <style>
-    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; padding: 40px; max-width: 800px; margin: 0 auto; }
-    h1 { color: #333; text-align: center; }
-    ul { list-style: none; padding: 0; }
-    li { padding: 12px 0; border-bottom: 1px solid #eee; }
-    a { text-decoration: none; color: #1a73e8; font-size: 16px; }
-    a:hover { text-decoration: underline; }
-    .footer { text-align: center; margin-top: 40px; color: #777; font-size: 14px; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      padding: 40px;
+      max-width: 900px;
+      margin: 0 auto;
+      background-color: #f9f9fb;
+      color: #333;
+    }
+    h1 {
+      color: #2c3e50;
+      text-align: center;
+      margin-bottom: 10px;
+    }
+    p.subtitle {
+      text-align: center;
+      color: #7f8c8d;
+      font-size: 16px;
+      margin-top: 10px;
+    }
+    ul {
+      list-style: none;
+      padding: 0;
+    }
+    li {
+      padding: 12px 16px;
+      border-bottom: 1px solid #eee;
+      background: white;
+      border-radius: 8px;
+      margin: 8px 0;
+      display: flex;
+      align-items: center;
+    }
+    li:hover {
+      background: #f1f5f9;
+    }
+    a {
+      text-decoration: none;
+      color: #3498db;
+      font-size: 16px;
+      flex: 1;
+      display: flex;
+      align-items: center;
+    }
+    a:hover {
+      text-decoration: underline;
+    }
+    .icon {
+      margin-right: 10px;
+      width: 20px;
+      text-align: center;
+    }
+    .size {
+      color: #7f8c8d;
+      font-size: 14px;
+      margin-left: 8px;
+    }
+    .folder-name {
+      font-weight: bold;
+      color: #e67e22;
+      margin: 20px 0 10px;
+      padding-left: 10px;
+      border-left: 3px solid #e67e22;
+    }
+    .footer {
+      text-align: center;
+      margin-top: 40px;
+      color: #95a5a6;
+      font-size: 14px;
+    }
+    .loading {
+      text-align: center;
+      color: #95a5a6;
+      font-style: italic;
+    }
   </style>
 </head>
 <body>
   <h1>☁️ 我的云盘</h1>
-  <ul id="file-list"></ul>
+  <p class="subtitle">点击文件即可下载</p>
+  <ul id="file-list">
+    <li class="loading">加载中...</li>
+  </ul>
   <p class="footer">更新时间: <span id="update-time"></span></p>
 
   <script>
-    fetch('https://api.github.com/repos/nolan180940/my-cloud/contents/')
-      .then(res => res.json())
-      .then(data => {
-        const ul = document.getElementById('file-list');
-        const exclude = ['index.html', 'README.md', '.github']; // 忽略的文件
-        data
-          .filter(item => !exclude.includes(item.name))
+    // 👇 修改这里：你的 GitHub 用户名 和 仓库名
+    const username = 'nolan180940';
+    const repo = 'my-cloud';
+    const exclude = ['index.html', 'README.md', '.github']; // 忽略的文件
+
+    const fileList = document.getElementById('file-list');
+    fileList.innerHTML = '';
+
+    // 文件类型图标（可扩展）
+    function getIcon(name) {
+      const ext = name.split('.').pop().toLowerCase();
+      if (['pdf'].includes(ext)) return '📕';
+      if (['doc', 'docx'].includes(ext)) return '📘';
+      if (['ppt', 'pptx'].includes(ext)) return '📊';
+      if (['xls', 'xlsx'].includes(ext)) return '📈';
+      if (['zip', 'rar', '7z'].includes(ext)) return '📦';
+      if (['jpg', 'jpeg', 'png', 'gif'].includes(ext)) return '🖼️';
+      if (['mp4', 'avi'].includes(ext)) return '🎬';
+      return '📄';
+    }
+
+    // 获取文件夹内容
+    async function loadFolder(path, displayName) {
+      const folderLi = document.createElement('li');
+      folderLi.className = 'folder-name';
+      folderLi.textContent = displayName || path;
+      fileList.appendChild(folderLi);
+
+      try {
+        const res = await fetch(`https://api.github.com/repos/${username}/${repo}/contents/${path}`);
+        const files = await res.json();
+        files
+          .filter(file => file.type === 'file' && !exclude.includes(file.name))
           .forEach(file => {
             const li = document.createElement('li');
             li.innerHTML = `
-              <a href="https://cdn.jsdelivr.net/gh/nolan180940/my-cloud@main/${file.name}" target="_blank">
-                📎 ${file.name} (${(file.size / 1024).toFixed(1)} KB)
+              <a href="https://cdn.jsdelivr.net/gh/${username}/${repo}@main/${file.path}" target="_blank">
+                <span class="icon">${getIcon(file.name)}</span>
+                ${file.name}
+                <span class="size">(${(file.size / 1024).toFixed(1)} KB)</span>
               </a>
             `;
-            ul.appendChild(li);
+            fileList.appendChild(li);
           });
-        document.getElementById('update-time').textContent = new Date().toLocaleString();
-      })
-      .catch(err => console.error('加载失败:', err));
+      } catch (err) {
+        const li = document.createElement('li');
+        li.innerHTML = `<a href="#" style="color:red">❌ 加载失败: ${path}</a>`;
+        fileList.appendChild(li);
+        console.error('加载文件夹失败:', err);
+      }
+    }
+
+    // 加载根目录文件
+    async function loadRoot() {
+      try {
+        const res = await fetch(`https://api.github.com/repos/${username}/${repo}/contents/`);
+        const items = await res.json();
+
+        const files = items.filter(item => item.type === 'file' && !exclude.includes(item.name));
+        const folders = items.filter(item => item.type === 'dir' && !exclude.includes(item.name));
+
+        // 显示根文件
+        files.forEach(file => {
+          const li = document.createElement('li');
+          li.innerHTML = `
+            <a href="https://cdn.jsdelivr.net/gh/${username}/${repo}@main/${file.name}" target="_blank">
+              <span class="icon">${getIcon(file.name)}</span>
+              ${file.name}
+              <span class="size">(${(file.size / 1024).toFixed(1)} KB)</span>
+            </a>
+          `;
+          fileList.appendChild(li);
+        });
+
+        // 显示每个文件夹的内容
+        for (const folder of folders) {
+          await loadFolder(folder.name, `📁 ${folder.name}`);
+        }
+
+      } catch (err) {
+        fileList.innerHTML = `<li><a href="#" style="color:red">❌ 加载失败，请检查用户名和仓库名</a></li>`;
+        console.error('加载仓库失败:', err);
+      }
+    }
+
+    // 启动加载
+    window.onload = () => {
+      loadRoot();
+      document.getElementById('update-time').textContent = new Date().toLocaleString();
+    };
   </script>
 </body>
 </html>
