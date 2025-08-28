@@ -20,7 +20,7 @@
   <p class="footer">更新时间: <span id="update-time"></span></p>
 
   <script>
-    fetch('https://api.github.com/repos/你的用户名/my-cloud/contents/')
+    fetch('https://api.github.com/repos/nolan180940/my-cloud/contents/')
       .then(res => res.json())
       .then(data => {
         const ul = document.getElementById('file-list');
@@ -30,7 +30,7 @@
           .forEach(file => {
             const li = document.createElement('li');
             li.innerHTML = `
-              <a href="https://cdn.jsdelivr.net/gh/你的用户名/my-cloud@main/${file.name}" target="_blank">
+              <a href="https://cdn.jsdelivr.net/gh/nolan180940/my-cloud@main/${file.name}" target="_blank">
                 📎 ${file.name} (${(file.size / 1024).toFixed(1)} KB)
               </a>
             `;
