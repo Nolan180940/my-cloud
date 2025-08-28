@@ -79,7 +79,7 @@
       color: #95a5a6;
       font-style: italic;
     }
-    /* 预览弹窗样式 */
+    /* 预览弹窗 */
     .modal {
       position: fixed;
       top: 0;
@@ -147,29 +147,30 @@
       return '📄';
     }
 
-    // 智能生成预览链接
+    // 生成预览链接
     function getPreviewUrl(filePath) {
       const ext = filePath.split('.').pop().toLowerCase();
-      // 生成 GitHub Pages 的绝对路径
-      const fileUrl = `${window.location.origin}/${filePath}`;
+      const rawUrl = `https://raw.githubusercontent.com/${username}/${repo}/main/${filePath}`;
 
-      // PDF、图片：本地预览
+      // PDF：本地预览
       if (ext === 'pdf') {
         return filePath;
-      } else if (['jpg', 'jpeg', 'png', 'gif'].includes(ext)) {
-        return filePath;
       }
-      // PPTX、PPT、DOCX、XLSX：使用微软 Office Online 预览
+      // PPTX/PPT/DOCX/XLSX：用微软 Office Online 预览
       else if (['ppt', 'pptx', 'doc', 'docx', 'xls', 'xlsx'].includes(ext)) {
-        return `https://view.officeapps.live.com/op/view.aspx?src=${encodeURIComponent(fileUrl)}`;
+        return `https://view.officeapps.live.com/op/view.aspx?src=${encodeURIComponent(rawUrl)}`;
+      }
+      // 图片：本地预览
+      else if (['jpg', 'jpeg', 'png', 'gif'].includes(ext)) {
+        return filePath;
       }
       // 其他文件：直接下载
       else {
-        return `https://raw.githubusercontent.com/${username}/${repo}/main/${filePath}`;
+        return rawUrl;
       }
     }
 
-    // 获取文件夹内容
+    // 加载文件夹
     async function loadFolder(path, displayName) {
       const folderLi = document.createElement('li');
       folderLi.className = 'folder-name';
@@ -187,7 +188,7 @@
             const ext = file.name.split('.').pop().toLowerCase();
 
             let previewText = '';
-            if (['pdf', 'pptx', 'ppt', 'docx', 'xlsx', 'txt'].includes(ext)) {
+            if (['pdf', 'pptx', 'ppt', 'docx', 'xlsx'].includes(ext)) {
               previewText = '【预览】';
             } else if (['jpg', 'jpeg', 'png', 'gif'].includes(ext)) {
               previewText = '【查看】';
@@ -213,7 +214,7 @@
       }
     }
 
-    // 加载根目录文件
+    // 加载根目录
     async function loadRoot() {
       try {
         const res = await fetch(`https://api.github.com/repos/${username}/${repo}/contents/`);
@@ -222,14 +223,14 @@
         const files = items.filter(item => item.type === 'file' && !exclude.includes(item.name));
         const folders = items.filter(item => item.type === 'dir' && !exclude.includes(item.name));
 
-        // 显示根文件
+        // 根文件
         files.forEach(file => {
           const li = document.createElement('li');
           const previewUrl = getPreviewUrl(file.name);
           const ext = file.name.split('.').pop().toLowerCase();
 
           let previewText = '';
-          if (['pdf', 'pptx', 'ppt', 'docx', 'xlsx', 'txt'].includes(ext)) {
+          if (['pdf', 'pptx', 'ppt', 'docx', 'xlsx'].includes(ext)) {
             previewText = '【预览】';
           } else if (['jpg', 'jpeg', 'png', 'gif'].includes(ext)) {
             previewText = '【查看】';
@@ -248,7 +249,7 @@
           fileList.appendChild(li);
         });
 
-        // 显示每个文件夹的内容
+        // 文件夹
         for (const folder of folders) {
           await loadFolder(folder.name, `📁 ${folder.name}`);
         }
@@ -259,33 +260,26 @@
       }
     }
 
-    // 打开预览窗口
+    // 打开预览
     function openPreview(url, filename) {
       const modal = document.getElementById('preview-modal');
       const iframe = document.getElementById('preview-frame');
       const closeBtn = document.querySelector('.close-btn');
 
-      // 设置 iframe 源
       iframe.src = url;
-
-      // 显示弹窗
       modal.style.display = 'flex';
 
-      // 关闭按钮事件
       closeBtn.onclick = () => {
-        iframe.src = ''; // 清空 src，避免后台继续加载
+        iframe.src = ''; // 清空，避免后台加载
         modal.style.display = 'none';
       };
 
-      // 点击背景关闭
       modal.onclick = (e) => {
-        if (e.target === modal) {
-          closeBtn.click();
-        }
+        if (e.target === modal) closeBtn.click();
       };
     }
 
-    // 启动加载
+    // 启动
     window.onload = () => {
       loadRoot();
       document.getElementById('update-time').textContent = new Date().toLocaleString();
