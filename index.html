@@ -83,7 +83,7 @@
 </head>
 <body>
   <h1>☁️ 我的云盘</h1>
-  <p class="subtitle">点击文件即可下载</p>
+  <p class="subtitle">点击文件即可预览或下载</p>
   <ul id="file-list">
     <li class="loading">加载中...</li>
   </ul>
@@ -98,7 +98,7 @@
     const fileList = document.getElementById('file-list');
     fileList.innerHTML = '';
 
-    // 文件类型图标（可扩展）
+    // 文件类型图标
     function getIcon(name) {
       const ext = name.split('.').pop().toLowerCase();
       if (['pdf'].includes(ext)) return '📕';
@@ -109,6 +109,16 @@
       if (['jpg', 'jpeg', 'png', 'gif'].includes(ext)) return '🖼️';
       if (['mp4', 'avi'].includes(ext)) return '🎬';
       return '📄';
+    }
+
+    // 智能生成下载链接
+    function getDownloadUrl(filePath) {
+      const ext = filePath.split('.').pop().toLowerCase();
+      if (['pdf', 'jpg', 'jpeg', 'png', 'gif'].includes(ext)) {
+        return `https://cdn.jsdelivr.net/gh/${username}/${repo}@main/${filePath}`;
+      } else {
+        return `https://raw.githubusercontent.com/${username}/${repo}/main/${filePath}`;
+      }
     }
 
     // 获取文件夹内容
@@ -125,8 +135,7 @@
           .filter(file => file.type === 'file' && !exclude.includes(file.name))
           .forEach(file => {
             const li = document.createElement('li');
-            // ✅ 使用 raw.githack.com 替代 jsDelivr
-            const downloadUrl = `https://raw.githubusercontent.com/${username}/${repo}/main/${file.path}`;
+            const downloadUrl = getDownloadUrl(file.path);
             li.innerHTML = `
               <a href="${downloadUrl}" target="_blank">
                 <span class="icon">${getIcon(file.name)}</span>
@@ -156,8 +165,7 @@
         // 显示根文件
         files.forEach(file => {
           const li = document.createElement('li');
-          // ✅ 使用 raw.githack.com 替代 jsDelivr
-          const downloadUrl = `https://raw.githack.com/${username}/${repo}/main/${file.name}`;
+          const downloadUrl = getDownloadUrl(file.name);
           li.innerHTML = `
             <a href="${downloadUrl}" target="_blank">
               <span class="icon">${getIcon(file.name)}</span>
