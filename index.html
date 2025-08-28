@@ -125,8 +125,10 @@
           .filter(file => file.type === 'file' && !exclude.includes(file.name))
           .forEach(file => {
             const li = document.createElement('li');
+            // ✅ 使用 raw.githack.com 替代 jsDelivr
+            const downloadUrl = `https://raw.githack.com/${username}/${repo}/main/${file.path}`;
             li.innerHTML = `
-              <a href="https://cdn.jsdelivr.net/gh/${username}/${repo}@main/${file.path}" target="_blank">
+              <a href="${downloadUrl}" target="_blank">
                 <span class="icon">${getIcon(file.name)}</span>
                 ${file.name}
                 <span class="size">(${(file.size / 1024).toFixed(1)} KB)</span>
@@ -154,8 +156,10 @@
         // 显示根文件
         files.forEach(file => {
           const li = document.createElement('li');
+          // ✅ 使用 raw.githack.com 替代 jsDelivr
+          const downloadUrl = `https://raw.githack.com/${username}/${repo}/main/${file.name}`;
           li.innerHTML = `
-            <a href="https://cdn.jsdelivr.net/gh/${username}/${repo}@main/${file.name}" target="_blank">
+            <a href="${downloadUrl}" target="_blank">
               <span class="icon">${getIcon(file.name)}</span>
               ${file.name}
               <span class="size">(${(file.size / 1024).toFixed(1)} KB)</span>
