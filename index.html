@@ -126,7 +126,7 @@
           .forEach(file => {
             const li = document.createElement('li');
             // ✅ 使用 raw.githack.com 替代 jsDelivr
-            const downloadUrl = `https://raw.githack.com/${username}/${repo}/main/${file.path}`;
+            const downloadUrl = `https://raw.githubusercontent.com/${username}/${repo}/main/${file.path}`;
             li.innerHTML = `
               <a href="${downloadUrl}" target="_blank">
                 <span class="icon">${getIcon(file.name)}</span>
