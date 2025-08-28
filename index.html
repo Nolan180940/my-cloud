@@ -79,6 +79,36 @@
       color: #95a5a6;
       font-style: italic;
     }
+    /* 预览弹窗样式 */
+    .modal {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0,0,0,0.8);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      z-index: 9999;
+      display: none;
+    }
+    .modal iframe {
+      width: 90%;
+      height: 80%;
+      border: none;
+      background: white;
+    }
+    .close-btn {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      color: white;
+      font-size: 24px;
+      cursor: pointer;
+      background: none;
+      border: none;
+    }
   </style>
 </head>
 <body>
@@ -88,6 +118,12 @@
     <li class="loading">加载中...</li>
   </ul>
   <p class="footer">更新时间: <span id="update-time"></span></p>
+
+  <!-- 预览弹窗 -->
+  <div id="preview-modal" class="modal">
+    <button class="close-btn">×</button>
+    <iframe id="preview-frame"></iframe>
+  </div>
 
   <script>
     // 👇 修改这里：你的 GitHub 用户名 和 仓库名
@@ -111,12 +147,24 @@
       return '📄';
     }
 
-    // 智能生成下载链接
-    function getDownloadUrl(filePath) {
+    // 智能生成预览链接
+    function getPreviewUrl(filePath) {
       const ext = filePath.split('.').pop().toLowerCase();
-      if (['pdf', 'jpg', 'jpeg', 'png', 'gif'].includes(ext)) {
-        return `https://cdn.jsdelivr.net/gh/${username}/${repo}@main/${filePath}`;
-      } else {
+      // 生成 GitHub Pages 的绝对路径
+      const fileUrl = `${window.location.origin}/${filePath}`;
+
+      // PDF、图片：本地预览
+      if (ext === 'pdf') {
+        return filePath;
+      } else if (['jpg', 'jpeg', 'png', 'gif'].includes(ext)) {
+        return filePath;
+      }
+      // PPTX、PPT、DOCX、XLSX：使用微软 Office Online 预览
+      else if (['ppt', 'pptx', 'doc', 'docx', 'xls', 'xlsx'].includes(ext)) {
+        return `https://view.officeapps.live.com/op/view.aspx?src=${encodeURIComponent(fileUrl)}`;
+      }
+      // 其他文件：直接下载
+      else {
         return `https://raw.githubusercontent.com/${username}/${repo}/main/${filePath}`;
       }
     }
@@ -135,12 +183,24 @@
           .filter(file => file.type === 'file' && !exclude.includes(file.name))
           .forEach(file => {
             const li = document.createElement('li');
-            const downloadUrl = getDownloadUrl(file.path);
+            const previewUrl = getPreviewUrl(file.path);
+            const ext = file.name.split('.').pop().toLowerCase();
+
+            let previewText = '';
+            if (['pdf', 'pptx', 'ppt', 'docx', 'xlsx', 'txt'].includes(ext)) {
+              previewText = '【预览】';
+            } else if (['jpg', 'jpeg', 'png', 'gif'].includes(ext)) {
+              previewText = '【查看】';
+            } else {
+              previewText = '【下载】';
+            }
+
             li.innerHTML = `
-              <a href="${downloadUrl}" target="_blank">
+              <a href="#" onclick="openPreview('${previewUrl}', '${file.name}'); return false;">
                 <span class="icon">${getIcon(file.name)}</span>
                 ${file.name}
                 <span class="size">(${(file.size / 1024).toFixed(1)} KB)</span>
+                <span style="color: #2ecc71;">${previewText}</span>
               </a>
             `;
             fileList.appendChild(li);
@@ -165,12 +225,24 @@
         // 显示根文件
         files.forEach(file => {
           const li = document.createElement('li');
-          const downloadUrl = getDownloadUrl(file.name);
+          const previewUrl = getPreviewUrl(file.name);
+          const ext = file.name.split('.').pop().toLowerCase();
+
+          let previewText = '';
+          if (['pdf', 'pptx', 'ppt', 'docx', 'xlsx', 'txt'].includes(ext)) {
+            previewText = '【预览】';
+          } else if (['jpg', 'jpeg', 'png', 'gif'].includes(ext)) {
+            previewText = '【查看】';
+          } else {
+            previewText = '【下载】';
+          }
+
           li.innerHTML = `
-            <a href="${downloadUrl}" target="_blank">
+            <a href="#" onclick="openPreview('${previewUrl}', '${file.name}'); return false;">
               <span class="icon">${getIcon(file.name)}</span>
               ${file.name}
               <span class="size">(${(file.size / 1024).toFixed(1)} KB)</span>
+              <span style="color: #2ecc71;">${previewText}</span>
             </a>
           `;
           fileList.appendChild(li);
@@ -185,6 +257,32 @@
         fileList.innerHTML = `<li><a href="#" style="color:red">❌ 加载失败，请检查用户名和仓库名</a></li>`;
         console.error('加载仓库失败:', err);
       }
+    }
+
+    // 打开预览窗口
+    function openPreview(url, filename) {
+      const modal = document.getElementById('preview-modal');
+      const iframe = document.getElementById('preview-frame');
+      const closeBtn = document.querySelector('.close-btn');
+
+      // 设置 iframe 源
+      iframe.src = url;
+
+      // 显示弹窗
+      modal.style.display = 'flex';
+
+      // 关闭按钮事件
+      closeBtn.onclick = () => {
+        iframe.src = ''; // 清空 src，避免后台继续加载
+        modal.style.display = 'none';
+      };
+
+      // 点击背景关闭
+      modal.onclick = (e) => {
+        if (e.target === modal) {
+          closeBtn.click();
+        }
+      };
     }
 
     // 启动加载
