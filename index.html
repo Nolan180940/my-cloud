@@ -131,8 +131,10 @@
     const repo = 'my-cloud';
     const exclude = ['index.html', 'README.md', '.github']; // 忽略的文件
 
+    // 🔐 设置访问密码（⚠️ 所有人都能看到源码，不要用重要密码）
+    const ACCESS_PASSWORD = 'MAX VERSTAPPEN IS MY GOAT'; // ← 修改为你想要的密码
+
     const fileList = document.getElementById('file-list');
-    fileList.innerHTML = '';
 
     // 文件类型图标
     function getIcon(name) {
@@ -152,11 +154,11 @@
       const ext = filePath.split('.').pop().toLowerCase();
       const rawUrl = `https://raw.githubusercontent.com/${username}/${repo}/main/${filePath}`;
 
-      // PDF：本地预览
+      // PDF：用浏览器本地预览
       if (ext === 'pdf') {
         return filePath;
       }
-      // PPTX/PPT/DOCX/XLSX：用微软 Office Online 预览
+      // Office 文件：用微软在线预览
       else if (['ppt', 'pptx', 'doc', 'docx', 'xls', 'xlsx'].includes(ext)) {
         return `https://view.officeapps.live.com/op/view.aspx?src=${encodeURIComponent(rawUrl)}`;
       }
@@ -214,7 +216,7 @@
       }
     }
 
-    // 加载根目录
+    // 加载根目录文件
     async function loadRoot() {
       try {
         const res = await fetch(`https://api.github.com/repos/${username}/${repo}/contents/`);
@@ -223,7 +225,7 @@
         const files = items.filter(item => item.type === 'file' && !exclude.includes(item.name));
         const folders = items.filter(item => item.type === 'dir' && !exclude.includes(item.name));
 
-        // 根文件
+        // 显示根文件
         files.forEach(file => {
           const li = document.createElement('li');
           const previewUrl = getPreviewUrl(file.name);
@@ -249,7 +251,7 @@
           fileList.appendChild(li);
         });
 
-        // 文件夹
+        // 加载每个文件夹
         for (const folder of folders) {
           await loadFolder(folder.name, `📁 ${folder.name}`);
         }
@@ -260,7 +262,7 @@
       }
     }
 
-    // 打开预览
+    // 打开预览弹窗
     function openPreview(url, filename) {
       const modal = document.getElementById('preview-modal');
       const iframe = document.getElementById('preview-frame');
@@ -270,7 +272,7 @@
       modal.style.display = 'flex';
 
       closeBtn.onclick = () => {
-        iframe.src = ''; // 清空，避免后台加载
+        iframe.src = ''; // 停止加载
         modal.style.display = 'none';
       };
 
@@ -279,8 +281,24 @@
       };
     }
 
-    // 启动
+    // 🛡️ 启动时先验证密码
     window.onload = () => {
+      const password = prompt("请输入访问密码：", "");
+
+      if (password === null) {
+        // 用户点击取消
+        document.body.innerHTML = "<h1 style='text-align:center;color:#e74c3c;margin-top:100px;'>访问被取消</h1>";
+        return;
+      }
+
+      if (password !== ACCESS_PASSWORD) {
+        // 密码错误
+        document.body.innerHTML = "<h1 style='text-align:center;color:#e74c3c;margin-top:100px;'>❌ 访问被拒绝：密码错误</h1>";
+        return;
+      }
+
+      // 密码正确，开始加载文件
+      fileList.innerHTML = ''; // 清空加载提示
       loadRoot();
       document.getElementById('update-time').textContent = new Date().toLocaleString();
     };
